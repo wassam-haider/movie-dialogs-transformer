@@ -1,0 +1,19 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/routes/__pycache__/
+*.pyc
+
+# Secrets
+backend/.env
+
+# Model weights — too large for git, and personal to your training run
+backend/checkpoints/*.pt
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS junk
+.DS_Store

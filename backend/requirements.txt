@@ -1,0 +1,10 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+sqlalchemy==2.0.35
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+
+# Torch is left out on purpose — install it separately with the
+# CPU-only command in COMMANDS.txt. That keeps this file portable
+# and avoids accidentally pulling a multi-GB CUDA build you don't need.

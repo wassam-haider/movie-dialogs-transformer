@@ -1,0 +1,132 @@
+MOVIE DIALOGS CHATBOT — SETUP & RUN COMMANDS
+=============================================
+Run these in order. "Terminal A" and "Terminal B" mean you need two
+terminal windows/tabs open at the same time (backend in one, frontend
+in the other) once you get to the "run" steps.
+
+Prerequisites: Python 3.10+ and Node.js 18+ already installed.
+
+
+STEP 0 — Get your checkpoint into the project
+-----------------------------------------------
+Unzip checkpoints.zip and copy the file you want (best_model.pt is
+recommended) into:
+    movie-chatbot/backend/checkpoints/best_model.pt
+
+
+STEP 1 — Create a free Neon Postgres database
+-----------------------------------------------
+1. Go to https://neon.tech and sign up (free tier is enough).
+2. Create a new project.
+3. On the project dashboard, open "Connection Details" and copy the
+   connection string. It looks like:
+       postgresql://USER:PASSWORD@ep-xxxx.neon.tech/DBNAME?sslmode=require
+4. Keep this tab open — you'll paste it into backend/.env in step 3.
+
+
+STEP 2 — Backend: create and activate a virtual environment
+---------------------------------------------------------------
+(Terminal A)
+
+    cd movie-chatbot/backend
+
+    # create the venv
+    python -m venv venv
+
+    # activate it
+    # On macOS/Linux:
+    source venv/bin/activate
+    # On Windows (PowerShell):
+    venv\Scripts\Activate.ps1
+    # On Windows (cmd.exe):
+    venv\Scripts\activate.bat
+
+    # your prompt should now show (venv) at the start
+
+
+STEP 3 — Backend: install dependencies
+------------------------------------------
+(Terminal A, venv still active)
+
+    pip install -r requirements.txt
+
+    # Torch is installed separately as CPU-only (much smaller download,
+    # and this model doesn't need a GPU):
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+
+STEP 4 — Backend: configure environment variables
+------------------------------------------------------
+(Terminal A)
+
+    # macOS/Linux:
+    cp .env.example .env
+    # Windows:
+    copy .env.example .env
+
+Now open backend/.env in a text editor and:
+  - paste your Neon connection string into DATABASE_URL
+    (change "postgresql://" to "postgresql+psycopg2://" at the start)
+  - leave CHECKPOINT_PATH as checkpoints/best_model.pt (or point it at
+    whichever checkpoint file you copied in step 0)
+
+
+STEP 5 — Backend: run the API server
+------------------------------------------
+(Terminal A, venv still active, still inside movie-chatbot/backend)
+
+    uvicorn app.main:app --reload --port 8000
+
+You should see "Loading model from checkpoints/best_model.pt onto
+cpu ..." followed by "Uvicorn running on http://127.0.0.1:8000".
+Leave this terminal running.
+
+Sanity check: open http://localhost:8000 in a browser — you should see
+{"status":"ok", ...}. Open http://localhost:8000/docs for the
+interactive API docs.
+
+
+STEP 6 — Frontend: install dependencies
+--------------------------------------------
+(Terminal B — new terminal window/tab)
+
+    cd movie-chatbot/frontend
+    npm install
+
+
+STEP 7 — Frontend: run the dev server
+-------------------------------------------
+(Terminal B)
+
+    npm run dev
+
+Vite will print a local URL, normally:
+    http://localhost:5173
+
+Open that in your browser. Type a message and press Enter or click
+Send — it calls the backend on localhost:8000, which runs the model
+and writes the exchange to your Neon database.
+
+
+STOPPING EVERYTHING
+--------------------
+Ctrl+C in each terminal. Next time, you only need to repeat steps 5
+and 7 (activate the venv first: source venv/bin/activate, or the
+Windows equivalent) — no need to reinstall anything.
+
+
+TROUBLESHOOTING
+-----------------
+- "Couldn't reach the backend" in the browser
+    -> Make sure uvicorn (step 5) is still running and didn't crash.
+
+- FastAPI startup error about DATABASE_URL
+    -> Check backend/.env exists and the connection string starts with
+       postgresql+psycopg2:// (not just postgresql://).
+
+- SSL / connection refused talking to Neon
+    -> Make sure ?sslmode=require is at the end of your connection string.
+
+- CORS error in the browser console
+    -> Confirm FRONTEND_ORIGIN in backend/.env matches the URL Vite
+       printed in step 7 exactly (including http:// and the port).
